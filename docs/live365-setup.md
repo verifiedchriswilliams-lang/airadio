@@ -72,5 +72,4 @@ Both are read-only and public. I'll test both against the live station before wr
 What works on Live365:
 - `get_current_song`
 - `get_previous_song`
-
 - `request_song`. Requests are **banked**, not queued (see `phase-1-plan.md`), so no queue API is needed.
