@@ -62,10 +62,8 @@ compliance:
   # Kip may not say "next up, 1901". The app may not show an "Up next" title either.
   # 114(d)(2)(C)(ix): show title/artist/album "during, but not before" the song plays.
   announce_next_titles: false
-  # 114(j)(7): taking requests is fine, as long as the channel doesn't "substantially consist"
-  # of songs played within 1 hr of being requested. The law doesn't define "substantially",
-  # so we set our own conservative cap.
-  max_request_share_per_hour: 0.25
+  # 114(j)(7): requests are banked (theater of the mind) and never change the playlist,
+  # so the station stays non-interactive. No request-share cap is needed.
   # 114(d)(2)(C)(iii): a continuous program shorter than 3 hours is not allowed.
   # The scheduler must never fall into a fixed loop.
   no_fixed_loops: true

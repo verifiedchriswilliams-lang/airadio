@@ -23,7 +23,8 @@ Docs re-checked 2026-10-05.
 | Artist / album / title separation | AutoDJ Separation Rules: same artist / album / title / track "within" | ✅ |
 | DMCA performance complement | Built-in checker | ✅ |
 | Energy, year, texture, vocal, BPM separation | Not available | ❌ comes back with Super Hi-Fi |
-| Controller-picked songs and requests | No API to queue songs | ❌ comes back with Super Hi-Fi |
+| Controller-picked songs | No API to queue songs | ❌ not needed for now |
+| Requests | Banked by the controller; the payoff comes when the song plays naturally | ✅ |
 
 ## Setup steps (you, in the Live365 dashboard)
 
@@ -72,5 +73,4 @@ What works on Live365:
 - `get_current_song`
 - `get_previous_song`
 
-What doesn't:
-- `request_song`. Until Super Hi-Fi, Kip **does not get the request tool**, and his prompt shouldn't promise songs he can't schedule.
+- `request_song`. Requests are **banked**, not queued (see `phase-1-plan.md`), so no queue API is needed.
