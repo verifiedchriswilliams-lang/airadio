@@ -1,0 +1,71 @@
+# Eleven Radio: programming rules (prototype)
+#
+# Categories decide WHAT we want to play next.
+# Separation rules decide what we're ALLOWED to play next.
+# The Station Controller's scheduler reads this file. It holds no code.
+
+clock:
+  avg_slot_minutes: 4.0      # ~3.6 min song + DJ talk. Gives ~15 songs/hr.
+
+categories:
+  P1:
+    name: Powers
+    size: 7
+    turnover_minutes: 50     # each song roughly every 50 min, i.e. ~8.4 P1 plays/hr (~56% of the hour)
+    max_per_artist: 1
+  N1:
+    name: Next Wave
+    size: 5
+    turnover_minutes: 180    # ~1.7 N1 plays/hr
+    max_per_artist: 1
+  G1:
+    name: Gold
+    size: 40                 # see note below
+    turnover_minutes: 660    # 10-12 hr target
+    max_per_artist: 2
+
+# Note on G1 size. G1 gets whatever P1 and N1 leave: about 15 - 8.4 - 1.7 = 4.9 plays/hr.
+#   40 songs / 4.9 per hr ≈ 8 hr turnover
+#   55 songs / 4.9 per hr ≈ 11 hr turnover   <- matches the 10-12 hr target
+# The scheduler treats turnover as a target, not a promise.
+
+library_rules:
+  max_songs_per_artist: 2
+  max_songs_per_new_artist: 1
+
+separation:
+  # hard = never violated, even if it means borrowing from another category
+  # soft = scored as a penalty; the best-scoring eligible candidate wins
+  hard:
+    artist_min_songs_between: 3
+    artist_min_minutes_between: 60
+    title_min_minutes_between: 45      # stops a P1 or request replaying too soon
+  soft:
+    same_texture_back_to_back: avoid   # texture: synth | guitar | groove
+    same_year_back_to_back: avoid
+    prefer_year_gap: 3
+    same_vocal_back_to_back: avoid     # only works if the library has enough female/mixed vocals
+    max_energy_jump: 2                 # 1-5 scale, so no 5 -> 2
+    no_energy_streak_over: 3           # e.g. not four 5s in a row, and not four 2s in a row
+    max_bpm_jump_pct: 15               # BPM is measured from the audio file, not typed in
+
+# US statutory webcast license (SoundExchange): 17 USC 114(d)(2), (j)(7), (j)(13).
+# These are legal limits, so they are always hard rules. Not legal advice; confirm with counsel before going public.
+compliance:
+  window_hours: 3
+  max_different_songs_per_album: 3
+  max_consecutive_per_album: 2
+  max_different_songs_per_artist: 4
+  max_consecutive_per_artist: 3
+  # 114(d)(2)(C)(ii): no advance announcement of specific titles. The one exception is
+  # "an artist will be featured" with no specific time. Kip may say "more Phoenix later";
+  # Kip may not say "next up, 1901". The app may not show an "Up next" title either.
+  # 114(d)(2)(C)(ix): show title/artist/album "during, but not before" the song plays.
+  announce_next_titles: false
+  # 114(j)(7): taking requests is fine, as long as the channel doesn't "substantially consist"
+  # of songs played within 1 hr of being requested. The law doesn't define "substantially",
+  # so we set our own conservative cap.
+  max_request_share_per_hour: 0.25
+  # 114(d)(2)(C)(iii): a continuous program shorter than 3 hours is not allowed.
+  # The scheduler must never fall into a fixed loop.
+  no_fixed_loops: true
