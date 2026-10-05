@@ -1,7 +1,18 @@
 # Eleven Radio — Phase 1 Plan
 
-Status: **proposal, awaiting review.** No infrastructure has been created.
-Docs verified 2026-10-05 against the AzuraCast source (OpenAPI 0.23.8) and the ElevenLabs Agents docs.
+Status: **approved with changes (2026-10-05).**
+
+> **Update: playout is Live365 for now. Super Hi-Fi is the near-term target.**
+> - **Music:** purchased commercial tracks (`stations/eleven-alt/buy-list.md`). The ElevenMusic catalog is out.
+> - **Licensing:** Live365 includes US licensing.
+> - **Setup:** see `docs/live365-setup.md`.
+> - **What this changes below:**
+>   - The AzuraCast sections are parked as the self-hosted fallback.
+>   - The scheduler runs inside Live365 for now.
+>   - Requests wait for Super Hi-Fi.
+>   - The controller runs serverless (see Deployment), so no droplet and no domain are needed.
+
+Docs verified 2026-10-05 against the AzuraCast source (OpenAPI 0.23.8), the ElevenLabs Agents docs and the Live365 help center.
 
 ## Goal
 
@@ -77,7 +88,10 @@ PlayoutAdapter
   skip()                              # Phase 4
 ```
 
-`AzuraCastAdapter` is the first implementation. A future `SuperHiFiAdapter` would be the second. The routes, Kip's tools and the app stay the same.
+Implementations, in order:
+- `Live365Adapter`: read-only (now playing and history). This is the first one.
+- `SuperHiFiAdapter`: next.
+- `AzuraCastAdapter`: parked. The routes, Kip's tools and the app stay the same.
 
 ## Licensing constraints on the contract
 
@@ -122,7 +136,9 @@ Gap: AzuraCast has no reorder or insert-at-position endpoint. That's acceptable 
 
 ## Deployment
 
-One DigitalOcean droplet, Ubuntu LTS, **4 GB / 2 vCPU (about $24/mo)**. AzuraCast's minimum is 2 GB, but 2 GB is flaky.
+**Current:** Live365 hosts the stream. The Station Controller is a small serverless HTTPS function, likely a Cloudflare Worker on the free tier: always on, no cold starts, no server to manage. It gets a URL without needing a domain. Kip's ElevenAgents webhook tools call it.
+
+**Parked (self-hosted AzuraCast fallback):** one DigitalOcean droplet, Ubuntu LTS, **4 GB / 2 vCPU (about $24/mo)**. AzuraCast's minimum is 2 GB, but 2 GB is flaky.
 
 - AzuraCast runs from the official `docker.sh` installer. Skip the 1-click image: it's stale (0.17.x) and has had install failures.
 - The controller runs as one container on the same box.
@@ -138,16 +154,16 @@ One DigitalOcean droplet, Ubuntu LTS, **4 GB / 2 vCPU (about $24/mo)**. AzuraCas
 |---|---|---|
 | 1 | Plan (this doc) | You approve |
 | 2 | Repo scaffold, Kip prompt in git | Committed |
-| 3 | Droplet, domain, Caddy | `https://radio.<domain>` resolves |
-| 4–5 | AzuraCast installed, station created | Admin UI is up and the station is configured |
-| 6 | Load placeholder audio (real tracks once rights are settled) | Files are in a playlist |
-| 7 | Stream | Plays in VLC or a browser for 1 hr unattended |
-| 8 | Probe the API live | Confirm the table above against our instance |
-| 9 | Controller with `now-playing` + AzuraCast adapter | Unit tests, plus a live `curl` that matches the stream |
+| 3 | Buy the 65 tracks | Files have correct tags |
+| 4–5 | Live365 station, categories, separation rules, ClockWheel (`docs/live365-setup.md`) | Event scheduled |
+| 6 | Upload the library | All 65 tracks are in the right categories |
+| 7 | Stream | Plays for 1 hr unattended; the DMCA checker is clean |
+| 8 | Probe the public metadata and ICY metadata | Confirm current and last-played match what's on air |
+| 9 | Controller with `now-playing` + `Live365Adapter`, deployed serverless | Unit tests, plus a live `curl` that matches the stream |
 | 10 | `get_current_song` webhook tool | Tool test in the ElevenLabs dashboard |
 | 11 | Connect Kip | "What's playing?" is answered correctly |
 | 12 | Aircheck | Notes logged |
-| 13 | Phase 2 (previous/next), then Phase 3 (requests) | The full 13-step demo |
+| 13 | Phase 2 (previous) on Live365. Requests come with Super Hi-Fi. | The full 13-step demo |
 
 ## Deliberately not building yet
 
@@ -155,7 +171,6 @@ The website or app, other stations, social features, skip/queue controls, user a
 
 ## What I need from you
 
-1. **Music rights.** Pursue Marketplace licensing or written confirmation from ElevenLabs. Until then, OK to proceed on a private placeholder stream?
-2. **Hosting.** A DigitalOcean account (or another provider) and a domain you control.
-3. **Station id.** I've assumed `eleven-alt` with the display name "Eleven Radio". Confirm or rename.
-4. **Secrets.** Keep API keys out of chat. They go in environment variables on the droplet and in ElevenLabs workspace secrets.
+1. Set up Live365 by following `docs/live365-setup.md`, then send the stream URL and station ID.
+2. Anything you have on Super Hi-Fi's API (docs or a sales contact), so its adapter can be designed early.
+3. Keep API keys out of chat.
