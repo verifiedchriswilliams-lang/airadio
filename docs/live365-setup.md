@@ -67,7 +67,13 @@ Live365 has **no official broadcaster API**. Kip's Station Controller will read:
 - **Primary:** the station's public metadata, the same feed Live365's own "Last Played" widget uses. It's undocumented, so it could change without notice.
 - **Fallback:** the ICY metadata embedded in the stream itself.
 
-Both are read-only and public. I'll test both against the live station before writing the adapter.
+Both are read-only and public.
+
+**Tested 2026-10-05 against Andon Labs' Live365 stations:**
+- **Public metadata:** `GET https://api.live365.com/station/{id}` returns the current track, the last 8 played (with start/end/duration) and the listener count.
+- **ICY:** the stream carries `StreamTitle='Artist - Title'`.
+
+See `docs/research/andon-fm.md`.
 
 What works on Live365:
 - `get_current_song`
