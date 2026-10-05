@@ -9,7 +9,7 @@ Status: **approved with changes (2026-10-05).**
 > - **What this changes below:**
 >   - The AzuraCast sections are parked as the self-hosted fallback.
 >   - The scheduler runs inside Live365 for now.
->   - Requests are banked, theater-of-the-mind style (see below), so they work on Live365.
+>   - Every request goes into a call bank, theater-of-the-mind style (see below), so they work on Live365.
 >   - The controller runs serverless (see Deployment), so no droplet and no domain are needed.
 
 Docs verified 2026-10-05 against the AzuraCast source (OpenAPI 0.23.8), the ElevenLabs Agents docs and the Live365 help center.
@@ -65,14 +65,13 @@ GET  /v1/stations/{station}/now-playing   → Play + elapsed/remaining          
 GET  /v1/stations/{station}/previous      → last Play                          (Phase 2)
 GET  /v1/stations/{station}/next          → artist teaser only, never a title  (Phase 2)
 GET  /v1/stations/{station}/queue         → internal/admin only                (Phase 2)
-POST /v1/stations/{station}/requests      {title, artist?, name?} → RequestResult  (Phase 3, banked)
+POST /v1/stations/{station}/requests      {title, artist?, name?} → always "banked"   (Phase 3)
 ```
 
 ```
 Track         { id, title, artist, album?, duration_s, art_url? }
 Play          { track, started_at, source: "rotation" | "request" }
-RequestResult { status: "banked" | "played_recently" | "not_in_library" | "ambiguous",
-                track?, when_hint?: "soon" | "later", candidates? }
+RequestResult { status: "banked", in_library: bool, track? }
 ```
 
 Everything below the contract goes through a single interface:
@@ -100,20 +99,21 @@ Under the US statutory webcast license (17 USC 114), the station can't announce 
 - **The queue.** Admin-only.
 - **Request confirmations.** "I'll get that one on" is fine. "That's next" is not.
 
-## Requests are banked, not played on demand (decision)
+## Requests: the call bank (decision, per the PD)
 
-Requests work like they do on broadcast radio: theater of the mind. Kip takes the call, and the playlist doesn't change.
+Theater of the mind. Kip takes **every** request and says yes ("Yeah, we'll work on that"). The playlist never changes because of a call.
 
-- **In the library.** The controller **banks** the request (song, listener name, time) and Kip owns it: "Yeah, I'll get that one on." When that song comes up in normal rotation, the bank turns it into a live-sounding request: "This one's for Sarah, who called in earlier."
-- **When_hint.** The controller derives it from the song's category turnover and when it last played:
-  - P1/N1 comes back within the hour or so (`soon`).
-  - G1 can be hours away (`later`), so Kip can say "I'll work it in tonight."
-- **Played recently.** Kip can say he just played it.
-- **Not in the library.** Kip makes the programming call himself: "Nope, not tonight."
-- **Why this works.**
-  - It needs **no queue control**, so it works on Live365 today.
-  - Requests never drive playback, so the station stays clearly non-interactive under the license. That makes the request-share cap moot.
-- **The on-air payoff.** Kip's request shout-out at song time needs Kip's voice in the stream. That comes with voice breaks, after Phase 1. Until then, the bank still lets Kip answer "Did you play my song?" honestly.
+- **Every call is banked.** That includes songs that aren't in the library and songs that aren't coming up. Each entry holds:
+  - the **call audio** and the transcript (from ElevenAgents conversation recordings)
+  - the requested song, the listener's name and the time
+  - a library match, if there is one
+- **The bank is a production asset.**
+  - **Pre-song calls:** when a requested song is coming up anyway, the PD can edit that call and play it right before the song.
+  - **Programming ideas:** the PD reviews requests that aren't in the library as candidates for future adds.
+  - **Filler calls:** the PD can drop banked calls in round the clock so the station always sounds interactive.
+- **The controller's job is bookkeeping, not gatekeeping.** It records and matches requests and gives the PD a review list sorted by song, with each call's audio. It never refuses a request and never queues anything.
+- **What Kip says.** Kip sounds the same whatever the bank finds. He never says what's next by title.
+- **Editing calls and playing them on air** is the PD's workflow. It's out of scope until the PD decides how to run it.
 
 ## Scheduler (decision)
 
@@ -177,7 +177,7 @@ Gap: AzuraCast has no reorder or insert-at-position endpoint. That's acceptable 
 | 10 | `get_current_song` webhook tool | Tool test in the ElevenLabs dashboard |
 | 11 | Connect Kip | "What's playing?" is answered correctly |
 | 12 | Aircheck | Notes logged |
-| 13 | Phase 2 (previous), then Phase 3 (banked requests) | The full 13-step demo |
+| 13 | Phase 2 (previous), then Phase 3 (call bank) | The full 13-step demo |
 
 ## Deliberately not building yet
 

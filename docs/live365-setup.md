@@ -24,7 +24,7 @@ Docs re-checked 2026-10-05.
 | DMCA performance complement | Built-in checker | ✅ |
 | Energy, year, texture, vocal, BPM separation | Not available | ❌ comes back with Super Hi-Fi |
 | Controller-picked songs | No API to queue songs | ❌ not needed for now |
-| Requests | Banked by the controller; the payoff comes when the song plays naturally | ✅ |
+| Requests | Every call is banked (audio + request) for the PD to use on air | ✅ |
 
 ## Setup steps (you, in the Live365 dashboard)
 
@@ -72,4 +72,4 @@ Both are read-only and public. I'll test both against the live station before wr
 What works on Live365:
 - `get_current_song`
 - `get_previous_song`
-- `request_song`. Requests are **banked**, not queued (see `phase-1-plan.md`), so no queue API is needed.
+- `request_song`. Every call goes into the call bank (see `phase-1-plan.md`); no queue API is needed.
