@@ -52,8 +52,8 @@ Kip and the future app only ever see this. Responses are small and written for a
 ```
 GET  /v1/stations/{station}/now-playing   → Play + elapsed/remaining          (Phase 1)
 GET  /v1/stations/{station}/previous      → last Play                          (Phase 2)
-GET  /v1/stations/{station}/next          → next Play, or null                 (Phase 2)
-GET  /v1/stations/{station}/queue         → Play[]                             (Phase 2)
+GET  /v1/stations/{station}/next          → artist teaser only, never a title  (Phase 2)
+GET  /v1/stations/{station}/queue         → internal/admin only                (Phase 2)
 POST /v1/stations/{station}/requests      {title, artist?} → RequestResult     (Phase 3)
 ```
 
@@ -78,6 +78,23 @@ PlayoutAdapter
 ```
 
 `AzuraCastAdapter` is the first implementation. A future `SuperHiFiAdapter` would be the second. The routes, Kip's tools and the app stay the same.
+
+## Licensing constraints on the contract
+
+Under the US statutory webcast license (17 USC 114), the station can't announce a specific title before it plays. It may say that an artist will be featured at some unspecified time. Titles are shown "during, but not before" the song plays.
+
+- **Listener-facing "next".** It returns an artist teaser at most ("more Phoenix later"). It never returns a title.
+- **The queue.** Admin-only.
+- **Request confirmations.** "I'll get that one on" is fine. "That's next" is not. The cap on requested songs per hour is set in `programming.yaml`.
+
+## Scheduler (decision)
+
+AzuraCast's AutoDJ can't do category turnover plus separation rules (energy, year, texture, vocal, BPM, album/artist compliance).
+
+- **Who picks the songs.** The Station Controller picks every song. It applies the categories and rules in `stations/eleven-alt/programming.yaml`, then pushes its pick into AzuraCast's queue 1–2 songs ahead.
+- **Fallback.** AzuraCast's own rotation stays on underneath. If the controller dies, the music keeps playing.
+- **Requests.** They go through the same picker as an extra candidate, so separation and compliance still apply.
+- **To verify in Step 8:** how controller-inserted items interact with AzuraCast's own AutoDJ queue fill.
 
 ## How AzuraCast fits underneath (verified)
 
