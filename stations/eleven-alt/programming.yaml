@@ -20,7 +20,7 @@ categories:
     max_per_artist: 1
   G1:
     name: Gold
-    size: 40                 # see note below
+    size: 55                 # see note below
     turnover_minutes: 660    # 10-12 hr target
     max_per_artist: 2
 
